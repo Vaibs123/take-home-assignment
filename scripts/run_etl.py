@@ -63,7 +63,7 @@ def parse() -> list[CrimeTypeMetrics]:
 
     with open(crime_file_path, 'r') as file:
         reader = csv.DictReader(file)
-        crime_metrics = {}
+        calculate_counts = {}
         for row in reader:
             row = {col: row[col] for col in column_names}
             # Convert date column to datetime
@@ -81,16 +81,26 @@ def parse() -> list[CrimeTypeMetrics]:
             crime = row['primary_type']
             arrested = int(row['arrest'] == 'true')
             not_arrested = int(row['arrest'] == 'false')
-            if crime not in crime_metrics:
-                crime_metrics[crime] = [arrested, not_arrested]
+            if crime not in calculate_counts:
+                calculate_counts[crime] = [arrested, not_arrested]
             else:
-                crime_metrics[crime][0] = crime_metrics[crime][0] + arrested
-                crime_metrics[crime][1] = crime_metrics[crime][1] + not_arrested
+                calculate_counts[crime][0] = calculate_counts[crime][0] + arrested
+                calculate_counts[crime][1] = calculate_counts[crime][1] + not_arrested
+            # Write the record to the json format in the outputs folder
             with open(f'{output_folder}/{crime}.txt', 'a') as output_file:
                 record = CrimeDataRecord(**row).to_json()
                 output_file.write(f'{record}\n')
-    crime_metrics = [[key] + value for key, value in crime_metrics.items()]
-    ordered_crime_metrics = sorted(crime_metrics, key=lambda x: sum(x[1:]), reverse = True)
+    unordered_crime_metrics = []
+    for key, value in calculate_counts.items():
+        values = {}
+        values['primary_type'] = key
+        values['arrest_count'] = value[0]
+        values['non_arrest_count'] = value[1]
+        unordered_crime_metrics = unordered_crime_metrics + [[values]]
+    ordered_crime_metrics = sorted(unordered_crime_metrics, key=lambda x: sum(x[1:]), reverse = True)
+    # Get metrics by passing it to the CrimeTypeMetrics class
+    for index, calculate_counts in enumerate(ordered_crime_metrics):
+        ordered_crime_metrics[index] = CrimeTypeMetrics(**calculate_counts[0])
     return ordered_crime_metrics
 
     """YOUR CODE GOES IN THIS FUNCTION.
