@@ -1,4 +1,7 @@
+import csv
 import logging
+import os
+import shutil
 import sys
 from time import perf_counter
 from pydantic import BaseModel
@@ -38,6 +41,58 @@ outputs_dir = Path(".outputs")
 
 
 def parse() -> list[CrimeTypeMetrics]:
+    crime_file_path = 'data/crime.csv'
+    column_names = ['unique_key', 
+        'case_number', 
+        'date',
+        'block',
+        'primary_type',
+        'description',
+        'location_description',
+        'arrest',
+        'latitude',
+        'longitude'
+    ]
+    output_folder = 'outputs'
+    # Re-create the output folder at the beginning of each run
+    if os.path.exists(output_folder):
+        shutil.rmtree(output_folder, ignore_errors=True)
+        os.makedirs(output_folder)
+    else:
+        os.makedirs(output_folder)
+
+    with open(crime_file_path, 'r') as file:
+        reader = csv.DictReader(file)
+        crime_metrics = {}
+        for row in reader:
+            row = {col: row[col] for col in column_names}
+            # Convert date column to datetime
+            row['date'] = datetime.strptime(row['date'], '%Y-%m-%d %H:%M:%S %Z')
+            # Convert latitude & longitude to float
+            if row['latitude']:
+                row['latitude'] = float(row['latitude'])
+            else:
+                del row['latitude']
+            if row['longitude']:
+                row['longitude'] = float(row['longitude'])
+            else:
+                del row['longitude']
+            # Calcuate the arrest metrics for the crime
+            crime = row['primary_type']
+            arrested = int(row['arrest'] == 'true')
+            not_arrested = int(row['arrest'] == 'false')
+            if crime not in crime_metrics:
+                crime_metrics[crime] = [arrested, not_arrested]
+            else:
+                crime_metrics[crime][0] = crime_metrics[crime][0] + arrested
+                crime_metrics[crime][1] = crime_metrics[crime][1] + not_arrested
+            with open(f'{output_folder}/{crime}.txt', 'a') as output_file:
+                record = CrimeDataRecord(**row).to_json()
+                output_file.write(f'{record}\n')
+    crime_metrics = [[key] + value for key, value in crime_metrics.items()]
+    ordered_crime_metrics = sorted(crime_metrics, key=lambda x: sum(x[1:]), reverse = True)
+    return ordered_crime_metrics
+
     """YOUR CODE GOES IN THIS FUNCTION.
 
     Assignment:
@@ -67,8 +122,6 @@ def parse() -> list[CrimeTypeMetrics]:
         Even if you choose not to make those optimizations, it'll still be good to have a discussion about what could have
         been done.
     """
-
-    return []
 
 
 def check_criteria(test: Callable, name: str):
