@@ -1,4 +1,5 @@
 import csv
+import json
 import logging
 import os
 import shutil
@@ -35,10 +36,8 @@ class CrimeTypeMetrics(BaseModel):
     arrest_count: int  # The count of all CrimeDataRecords for a primary_type where arrest == True.
     non_arrest_count: int  # The count of all CrimeDataRecords for a primary_type where arrest == False.
 
-
 input_csv = Path("data/crime.csv")
 outputs_dir = Path(".outputs")
-
 
 def parse() -> list[CrimeTypeMetrics]:
     column_names = ['unique_key', 
@@ -62,6 +61,7 @@ def parse() -> list[CrimeTypeMetrics]:
     with open(input_csv, 'r') as file:
         reader = csv.DictReader(file)
         calculate_counts = {}
+        json_output = {}
         i = 0
         for row in reader:
             i = i + 1
@@ -81,17 +81,15 @@ def parse() -> list[CrimeTypeMetrics]:
             crime = row['primary_type']
             arrested = int(row['arrest'] == 'true')
             not_arrested = int(row['arrest'] == 'false')
+            record = CrimeDataRecord(**row).to_json()
             if crime not in calculate_counts:
+                json_output[crime] = [json.loads(record)]
                 calculate_counts[crime] = [arrested, not_arrested]
             else:
                 calculate_counts[crime][0] = calculate_counts[crime][0] + arrested
                 calculate_counts[crime][1] = calculate_counts[crime][1] + not_arrested
-            record = CrimeDataRecord(**row).to_json()
-            # Write the record to the json format in the outputs folder
-            with open(f'{outputs_dir}/{crime}.txt', 'a') as output_file:                
-                output_file.write(f'{record}\n')
-            # if i == 100:
-            #    break
+                json_output[crime] = json_output[crime] + [json.loads(record)]
+
     unordered_crime_metrics = []
     for key, value in calculate_counts.items():
         values = {}
@@ -99,14 +97,18 @@ def parse() -> list[CrimeTypeMetrics]:
         values['arrest_count'] = value[0]
         values['non_arrest_count'] = value[1]
         unordered_crime_metrics = unordered_crime_metrics + [[values]]
-    #print(unordered_crime_metrics)
-    #print(type(unordered_crime_metrics))
-    #ordered_crime_metrics = sorted(unordered_crime_metrics, key=lambda x: sum(x[1:]), reverse = True)
+
+    for key, value in json_output.items():
+        # Write the record to the json format in the outputs folder
+        lines = [json.dumps(item) for item in value]
+        # Join the lines with newline character
+        content = '\n'.join(lines)
+        with open(f'{outputs_dir}/{key}.txt', 'w') as output_file:
+            output_file.write(content)
     ordered_crime_metrics = sorted(unordered_crime_metrics, key=lambda x: x[0]['arrest_count'] + x[0]['non_arrest_count'], reverse=True)
     # Get metrics by passing it to the CrimeTypeMetrics class
     for index, calculate_counts in enumerate(ordered_crime_metrics):
         ordered_crime_metrics[index] = CrimeTypeMetrics(**calculate_counts[0])
-    print(ordered_crime_metrics)
     return ordered_crime_metrics
 
     """YOUR CODE GOES IN THIS FUNCTION.
