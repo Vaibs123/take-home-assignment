@@ -53,18 +53,19 @@ def parse() -> list[CrimeTypeMetrics]:
         'latitude',
         'longitude'
     ]
-    output_folder = 'outputs'
     # Re-create the output folder at the beginning of each run
-    if os.path.exists(output_folder):
-        shutil.rmtree(output_folder, ignore_errors=True)
-        os.makedirs(output_folder)
+    if os.path.exists(outputs_dir):
+        shutil.rmtree(outputs_dir, ignore_errors=True)
+        os.makedirs(outputs_dir)
     else:
-        os.makedirs(output_folder)
+        os.makedirs(outputs_dir)
 
     with open(crime_file_path, 'r') as file:
         reader = csv.DictReader(file)
         calculate_counts = {}
+        i = 0
         for row in reader:
+            i = i + 1
             row = {col: row[col] for col in column_names}
             # Convert date column to datetime
             row['date'] = datetime.strptime(row['date'], '%Y-%m-%d %H:%M:%S %Z')
@@ -86,10 +87,12 @@ def parse() -> list[CrimeTypeMetrics]:
             else:
                 calculate_counts[crime][0] = calculate_counts[crime][0] + arrested
                 calculate_counts[crime][1] = calculate_counts[crime][1] + not_arrested
+            record = CrimeDataRecord(**row).to_json()
             # Write the record to the json format in the outputs folder
-            with open(f'{output_folder}/{crime}.txt', 'a') as output_file:
-                record = CrimeDataRecord(**row).to_json()
+            with open(f'{outputs_dir}/{crime}.txt', 'a') as output_file:                
                 output_file.write(f'{record}\n')
+            # if i == 100:
+            #    break
     unordered_crime_metrics = []
     for key, value in calculate_counts.items():
         values = {}
@@ -97,10 +100,14 @@ def parse() -> list[CrimeTypeMetrics]:
         values['arrest_count'] = value[0]
         values['non_arrest_count'] = value[1]
         unordered_crime_metrics = unordered_crime_metrics + [[values]]
-    ordered_crime_metrics = sorted(unordered_crime_metrics, key=lambda x: sum(x[1:]), reverse = True)
+    #print(unordered_crime_metrics)
+    #print(type(unordered_crime_metrics))
+    #ordered_crime_metrics = sorted(unordered_crime_metrics, key=lambda x: sum(x[1:]), reverse = True)
+    ordered_crime_metrics = sorted(unordered_crime_metrics, key=lambda x: x[0]['arrest_count'] + x[0]['non_arrest_count'], reverse=True)
     # Get metrics by passing it to the CrimeTypeMetrics class
     for index, calculate_counts in enumerate(ordered_crime_metrics):
         ordered_crime_metrics[index] = CrimeTypeMetrics(**calculate_counts[0])
+    print(ordered_crime_metrics)
     return ordered_crime_metrics
 
     """YOUR CODE GOES IN THIS FUNCTION.
