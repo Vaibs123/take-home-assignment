@@ -36,29 +36,51 @@ class CrimeTypeMetrics(BaseModel):
     arrest_count: int  # The count of all CrimeDataRecords for a primary_type where arrest == True.
     non_arrest_count: int  # The count of all CrimeDataRecords for a primary_type where arrest == False.
 
+
 input_csv = Path("data/crime.csv")
 outputs_dir = Path(".outputs")
 
-def parse() -> list[CrimeTypeMetrics]:
-    column_names = ['unique_key', 
-        'case_number', 
-        'date',
-        'block',
-        'primary_type',
-        'description',
-        'location_description',
-        'arrest',
-        'latitude',
-        'longitude'
-    ]
-    # Re-create the output folder at the beginning of each run
+
+def _create_output_folder():
+    """Recreate the output folder at the beginning of each run"""
     if os.path.exists(outputs_dir):
         shutil.rmtree(outputs_dir, ignore_errors=True)
         os.makedirs(outputs_dir)
     else:
         os.makedirs(outputs_dir)
 
-    with open(input_csv, 'r') as file:
+
+def _fix_data_types(row):
+    # Convert date column to datetime
+    row["date"] = datetime.strptime(row["date"], "%Y-%m-%d %H:%M:%S %Z")
+    # Convert latitude & longitude to float
+    if row["latitude"]:
+        row["latitude"] = float(row["latitude"])
+    else:
+        del row["latitude"]
+    if row["longitude"]:
+        row["longitude"] = float(row["longitude"])
+    else:
+        del row["longitude"]
+    return row
+
+
+def parse() -> list[CrimeTypeMetrics]:
+    _create_output_folder()
+    column_names = [
+        "unique_key",
+        "case_number",
+        "date",
+        "block",
+        "primary_type",
+        "description",
+        "location_description",
+        "arrest",
+        "latitude",
+        "longitude",
+    ]
+
+    with open(input_csv, "r") as file:
         reader = csv.DictReader(file)
         calculate_counts = {}
         json_output = {}
@@ -66,21 +88,11 @@ def parse() -> list[CrimeTypeMetrics]:
         for row in reader:
             i = i + 1
             row = {col: row[col] for col in column_names}
-            # Convert date column to datetime
-            row['date'] = datetime.strptime(row['date'], '%Y-%m-%d %H:%M:%S %Z')
-            # Convert latitude & longitude to float
-            if row['latitude']:
-                row['latitude'] = float(row['latitude'])
-            else:
-                del row['latitude']
-            if row['longitude']:
-                row['longitude'] = float(row['longitude'])
-            else:
-                del row['longitude']
+            row = _fix_data_types(row)
             # Calcuate the arrest metrics for the crime
-            crime = row['primary_type']
-            arrested = int(row['arrest'] == 'true')
-            not_arrested = int(row['arrest'] == 'false')
+            crime = row["primary_type"]
+            arrested = int(row["arrest"] == "true")
+            not_arrested = int(row["arrest"] == "false")
             record = CrimeDataRecord(**row).to_json()
             if crime not in calculate_counts:
                 json_output[crime] = [json.loads(record)]
@@ -93,19 +105,22 @@ def parse() -> list[CrimeTypeMetrics]:
     unordered_crime_metrics = []
     for key, value in calculate_counts.items():
         values = {}
-        values['primary_type'] = key
-        values['arrest_count'] = value[0]
-        values['non_arrest_count'] = value[1]
+        values["primary_type"] = key
+        values["arrest_count"] = value[0]
+        values["non_arrest_count"] = value[1]
         unordered_crime_metrics = unordered_crime_metrics + [[values]]
 
     for key, value in json_output.items():
-        # Write the record to the json format in the outputs folder
         lines = [json.dumps(item) for item in value]
         # Join the lines with newline character
-        content = '\n'.join(lines)
-        with open(f'{outputs_dir}/{key}.txt', 'w') as output_file:
+        content = "\n".join(lines)
+        with open(f"{outputs_dir}/{key}.txt", "w") as output_file:
             output_file.write(content)
-    ordered_crime_metrics = sorted(unordered_crime_metrics, key=lambda x: x[0]['arrest_count'] + x[0]['non_arrest_count'], reverse=True)
+    ordered_crime_metrics = sorted(
+        unordered_crime_metrics,
+        key=lambda x: x[0]["arrest_count"] + x[0]["non_arrest_count"],
+        reverse=True,
+    )
     # Get metrics by passing it to the CrimeTypeMetrics class
     for index, calculate_counts in enumerate(ordered_crime_metrics):
         ordered_crime_metrics[index] = CrimeTypeMetrics(**calculate_counts[0])
