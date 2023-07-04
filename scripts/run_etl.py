@@ -41,7 +41,6 @@ outputs_dir = Path(".outputs")
 
 
 def parse() -> list[CrimeTypeMetrics]:
-    crime_file_path = 'data/crime.csv'
     column_names = ['unique_key', 
         'case_number', 
         'date',
@@ -60,7 +59,7 @@ def parse() -> list[CrimeTypeMetrics]:
     else:
         os.makedirs(outputs_dir)
 
-    with open(crime_file_path, 'r') as file:
+    with open(input_csv, 'r') as file:
         reader = csv.DictReader(file)
         calculate_counts = {}
         i = 0
