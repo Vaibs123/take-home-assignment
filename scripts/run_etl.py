@@ -5,10 +5,12 @@ import os
 import shutil
 import sys
 from time import perf_counter
+
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 from pathlib import Path
+
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -39,7 +41,18 @@ class CrimeTypeMetrics(BaseModel):
 
 input_csv = Path("data/crime.csv")
 outputs_dir = Path(".outputs")
-
+column_names = [
+    "unique_key",
+    "case_number",
+    "date",
+    "block",
+    "primary_type",
+    "description",
+    "location_description",
+    "arrest",
+    "latitude",
+    "longitude",
+]
 
 def _create_output_folder():
     """Recreate the output folder at the beginning of each run"""
@@ -67,26 +80,11 @@ def _fix_data_types(row):
 
 def parse() -> list[CrimeTypeMetrics]:
     _create_output_folder()
-    column_names = [
-        "unique_key",
-        "case_number",
-        "date",
-        "block",
-        "primary_type",
-        "description",
-        "location_description",
-        "arrest",
-        "latitude",
-        "longitude",
-    ]
-
     with open(input_csv, "r") as file:
         reader = csv.DictReader(file)
         calculate_counts = {}
         json_output = {}
-        i = 0
         for row in reader:
-            i = i + 1
             row = {col: row[col] for col in column_names}
             row = _fix_data_types(row)
             # Calcuate the arrest metrics for the crime
