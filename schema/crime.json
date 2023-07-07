@@ -1,0 +1,49 @@
+{
+    "unique_key":{
+        "data_type":"bigint",
+        "constraints":"not null",
+        "primary_key":"True"
+    },
+    "case_number":{
+        "data_type":"character varying(20)"
+    },
+    "date":{
+        "data_type":"timestamp"
+    },
+    "block":{
+        "data_type":"character varying(100)"
+    },
+    "primary_type":{
+        "data_type":"character varying(100)"
+    },
+    "description":{
+        "data_type":"character varying(1000)"
+    },
+    "location_description":{
+        "data_type":"character varying(1000)"
+    },
+    "arrest":{
+        "data_type":"bool"
+    },
+    "beat":{
+        "data_type":"int"
+    },
+    "district":{
+        "data_type":"int"
+    },
+    "ward":{
+        "data_type":"int"
+    },
+    "community_area":{
+        "data_type":"int"
+    },
+    "year":{
+        "data_type":"int"
+    },
+    "latitude":{
+        "data_type":"float"
+    },
+    "longitude":{
+        "data_type":"float"
+    }
+}
