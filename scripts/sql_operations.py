@@ -30,7 +30,9 @@ def create_table(conn, cursor, create_table_sql):
 
 def insert_data(conn, cursor, table_name, column_names, output_csv):
     try:
-        postgres_operations.insert_command(conn, cursor, table_name, column_names, output_csv)
+        postgres_operations.insert_command(
+            conn, cursor, table_name, column_names, output_csv
+        )
         logger.info("Inserted the data successfully")
     except:
         logger.error("Error inserting the data. Rolling back the connection")

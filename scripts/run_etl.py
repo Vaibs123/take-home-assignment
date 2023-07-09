@@ -54,6 +54,7 @@ column_names = [
     "longitude",
 ]
 
+
 def _create_output_folder():
     """Recreate the output folder at the beginning of each run"""
     if os.path.exists(outputs_dir):
@@ -114,6 +115,7 @@ def parse() -> list[CrimeTypeMetrics]:
         content = "\n".join(lines)
         with open(f"{outputs_dir}/{key}.txt", "w") as output_file:
             output_file.write(content)
+
     ordered_crime_metrics = sorted(
         unordered_crime_metrics,
         key=lambda x: x[0]["arrest_count"] + x[0]["non_arrest_count"],

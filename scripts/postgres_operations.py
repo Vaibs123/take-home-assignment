@@ -18,11 +18,11 @@ def get_conn():
     postgres_database = os.getenv("POSTGRES_DB")
     try:
         conn = psycopg2.connect(
-            database=postgres_database, 
-            user=postgres_user, 
-            password=postgres_password, 
-            host='localhost', 
-            port='5432'
+            database=postgres_database,
+            user=postgres_user,
+            password=postgres_password,
+            host="localhost",
+            port="5432",
         )
         logger.info("Connection successful")
     except:
@@ -60,6 +60,6 @@ def get_data(cursor, sql):
 def insert_command(conn, cursor, table_name, column_names, output_csv):
     copy = f"COPY {table_name}({','.join(column_names)}) FROM STDIN with csv"
     with open(output_csv) as csvFile:
-        next(csvFile) # skip headers
+        next(csvFile)  # skip headers
         cursor.copy_expert(sql=copy, file=csvFile)
     conn.commit()

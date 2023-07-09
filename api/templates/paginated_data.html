@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Covid state stats data</title>
+    <title>Covid State Stats Data</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>covid state stats data</h1>
+    <h1>Covid State Stats Data</h1>
 
     <div id="data-container">
         <!-- The data will be dynamically inserted here -->
@@ -57,7 +57,7 @@
             }
 
             function navigateToPage(page) {
-                window.location.href = '{{ url_for("covid_stats.get_covid_stats") }}?page=' + page;
+                window.location.href = '{{ url_for("covid_stats.get_covid_state_stats") }}?page=' + page;
             }
         });
     </script>

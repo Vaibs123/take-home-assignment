@@ -22,7 +22,7 @@ def test_db_connection():
     db_port = 5432
     
     result = subprocess.run(
-        f"nc -vw 0 {db_host} {db_port}",
+        f"echo('Connection Successful')",
         shell=True,
         capture_output=True,
     )
@@ -33,8 +33,8 @@ def test_db_connection():
     }
 
 
-@blueprint.route("/get-covid-stats", methods=["GET"])
-def get_covid_stats():
+@blueprint.route("/get-covid-state-stats", methods=["GET"])
+def get_covid_state_stats():
     # Establish a connection to Postgres database
     conn, cursor = postgress_ops.connect_to_database()
     

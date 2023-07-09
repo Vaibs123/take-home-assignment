@@ -3,7 +3,7 @@ $(document).ready(function() {
 
     function fetchData(page) {
         $.ajax({
-            url: '/covid-stats/get-covid-stats?page=' + page,
+            url: '/covid-stats/get-covid-state-stats?page=' + page,
             dataType: 'json',
             success: function(response) {
                 var data = response.data;
