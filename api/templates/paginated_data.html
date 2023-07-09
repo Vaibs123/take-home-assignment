@@ -15,14 +15,23 @@
         <!-- The pagination buttons will be dynamically inserted here -->
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script>
         $(document).ready(function() {
             var response = JSON.parse('{{ response | tojson | safe }}');
 
+            // Function to format dates to ISO format
+            function formatDate(dateString) {
+            var date = new Date(dateString);
+            return date.toISOString();
+            }
+
             // Render the data in the data container
             var dataContainer = $('#data-container');
-            var jsonData = JSON.stringify(response.data, null, 2);
+            var formattedData = response.data.map(function(row) {
+                row.date = formatDate(row.date);  // Assuming 'date' is the column name
+                return row;
+            });
+            var jsonData = JSON.stringify(formattedData, null, 4);
             var preElement = $('<pre>').text(jsonData);
             dataContainer.append(preElement);
 
