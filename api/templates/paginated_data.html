@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Covid state stats data</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>covid state stats data</h1>
+
+    <div id="data-container">
+        <!-- The data will be dynamically inserted here -->
+    </div>
+
+    <div id="pagination-container">
+        <!-- The pagination buttons will be dynamically inserted here -->
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            var response = JSON.parse('{{ response | tojson | safe }}');
+
+            // Render the data in the data container
+            var dataContainer = $('#data-container');
+            var jsonData = JSON.stringify(response.data, null, 2);
+            var preElement = $('<pre>').text(jsonData);
+            dataContainer.append(preElement);
+
+            // Render pagination buttons
+            var paginationContainer = $('#pagination-container');
+
+            if (response.prev_page !== null) {
+                var prevButton = $('<button>').text('Previous');
+                prevButton.on('click', function() {
+                    navigateToPage(response.prev_page);
+                });
+                paginationContainer.append(prevButton);
+            }
+
+            for (var i = 1; i <= response.total_pages; i++) {
+                var pageButton = $('<button>').text(i);
+                if (i === response.page) {
+                    pageButton.addClass('active');
+                }
+                pageButton.on('click', function() {
+                    navigateToPage(parseInt($(this).text()));
+                });
+                paginationContainer.append(pageButton);
+            }
+
+            if (response.next_page !== null) {
+                var nextButton = $('<button>').text('Next');
+                nextButton.on('click', function() {
+                    navigateToPage(response.next_page);
+                });
+                paginationContainer.append(nextButton);
+            }
+
+            function navigateToPage(page) {
+                window.location.href = '{{ url_for("covid_stats.get_covid_stats") }}?page=' + page;
+            }
+        });
+    </script>
+</body>
+</html>

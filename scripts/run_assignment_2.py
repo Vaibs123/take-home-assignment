@@ -63,12 +63,6 @@ def extract(column_names):
     logger.info("Extracting data successful")
 
 
-def connect_to_database():
-    conn = postgres_operations.get_conn()
-    cursor = postgres_operations.create_cursor(conn)
-    return conn, cursor
-
-
 def run_select_sql(cursor):
     select_files = glob.glob("sql/select_*")
     for file in select_files:
@@ -88,7 +82,7 @@ if __name__ == "__main__":
     table_schema = get_table_schema(table_schema_path)
     column_names = get_columns(table_schema)
     extract(column_names)
-    conn, cursor = connect_to_database()
+    conn, cursor = postgres_operations.connect_to_database()
     load_data(conn, cursor, column_names, table_schema)
     run_select_sql(cursor)
     postgres_operations.close_connection(conn)

@@ -36,6 +36,12 @@ def create_cursor(conn):
     return cursor
 
 
+def connect_to_database():
+    conn = get_conn()
+    cursor = create_cursor(conn)
+    return conn, cursor
+
+
 def close_connection(conn):
     conn.close()
     logger.info("Connection closed")
